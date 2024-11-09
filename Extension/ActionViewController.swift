@@ -20,6 +20,12 @@ class ActionViewController: UIViewController {
         super.viewDidLoad()
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(done))
         
+        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveCode))
+        navigationItem.rightBarButtonItems = [navigationItem.rightBarButtonItem!, saveButton]
+        
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.add, target: self, action: #selector(rastgeleCode))
+        
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillHideNotification, object: nil)
         notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
@@ -36,11 +42,26 @@ class ActionViewController: UIViewController {
                     
                     DispatchQueue.main.async {
                         self?.title = self?.pageTitle
+                        self?.loadSavedCode()
                     }
                 }
             }
         }
     }
+    func loadSavedCode() {
+           if let savedCode = UserDefaults.standard.string(forKey: pageUrl) {
+               script.text = savedCode
+           }
+       }
+    
+    @objc func saveCode() {
+            guard !pageUrl.isEmpty else { return }
+            UserDefaults.standard.set(script.text, forKey: pageUrl)
+            
+            let alert = UIAlertController(title: "Başarıyla Kaydedildi", message: "Kodunuz bu site için kaydedildi.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Tamam", style: .default))
+            present(alert, animated: true)
+        }
 
     @IBAction func done() {
         let item = NSExtensionItem()
@@ -66,6 +87,28 @@ class ActionViewController: UIViewController {
         script.scrollIndicatorInsets = script.contentInset
         let selectedRange = script.selectedRange
         script.scrollRangeToVisible(selectedRange)
+    }
+    
+    @objc func rastgeleCode(){
+        let ac = UIAlertController(title: "Sizin icin Öneri", message: "Assagida rastegele onerilen  JavaScript kodlariyla yapabilceklerinizi deneyimleyebilirsiniz", preferredStyle: .alert)
+        
+        ac.addAction(UIAlertAction(title: "Sayfada Yavaşça Aşağı Kaydırma", style: .default, handler: { action in
+            self.script.text = "setInterval(() => { document.body.style.backgroundColor = \"#\" + Math.floor(Math.random()*16777215).toString(16); }, 1000);"
+        }))
+        
+        ac.addAction(UIAlertAction(title: "Yavaş Yavaş Kaybolma Efekti", style: .default, handler: { action in
+            self.script.text = """
+                               var opacity = 1;
+                             setInterval(() => {
+                            if (opacity > 0) {
+                              opacity -= 0.05;
+                             document.body.style.opacity = opacity;
+                               }
+                            }, 100);
+                           """
+        }))
+        
+        present(ac, animated: true)
     }
 
 }
